@@ -65,28 +65,35 @@ class DashboardController extends Controller
             'image' => $song->image
         ]);
     }
+
     public function dj()
-{
-    $user = auth()->user();
+    {
+        $user = auth()->user();
 
-    $hasHistory = \App\Models\History::where('user_id', $user->id)->exists();
+        $hasHistory = History::where('user_id', $user->id)->exists();
 
-    if (!$hasHistory) {
-        $songs = \App\Models\Song::inRandomOrder()->limit(15)->get();
-    } else {
-        $genres = \App\Models\History::where('user_id', $user->id)
-            ->join('songs', 'histories.song_id', '=', 'songs.id')
-            ->select('songs.genre_id', \DB::raw('count(*) as total'))
-            ->groupBy('songs.genre_id')
-            ->orderByDesc('total')
-            ->pluck('genre_id');
+        if (!$hasHistory) {
+            // Sin historial: orden aleatorio
+            $songs = Song::inRandomOrder()->get();
+        } else {
+            $genres = History::where('histories.user_id', $user->id)
+                ->join('songs', 'histories.song_id', '=', 'songs.id')
+                ->select('songs.genre_id', DB::raw('count(*) as total'))
+                ->groupBy('songs.genre_id')
+                ->orderByDesc('total')
+                ->pluck('songs.genre_id');
 
-        $songs = \App\Models\Song::whereIn('genre_id', $genres)
-            ->inRandomOrder()
-            ->limit(15)
-            ->get();
+            if ($genres->isEmpty()) {
+                $songs = Song::inRandomOrder()->get();
+            } else {
+                 $genreList = $genres->implode(',');
+                $songs = Song::orderByRaw("FIELD(genre_id, {$genreList}) DESC")
+                    ->get();
+            }
+        }
+
+        return view('dj', [
+            'songsData' => $songs
+        ]);
     }
-
-    return view('dj', compact('songs'));
-}
 }

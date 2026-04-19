@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const songsData = @json($songsData);
     let currentIndex = 0;
-    let isPlaying = false;
+    let isSeeking = false;
 
     const audio = document.getElementById('audioPlayer');
     const playPauseBtn = document.getElementById('playPauseBtn');
@@ -194,12 +194,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const nowPlayingTitle = document.getElementById('nowPlayingTitle');
     const nowPlayingArtist = document.getElementById('nowPlayingArtist');
     const nowPlayingImage = document.getElementById('nowPlayingImage');
+    const volumeControl = document.getElementById('volumeControl');
+    const muteBtn = document.getElementById('muteBtn');
+    const volumeHighIcon = document.getElementById('volumeHighIcon');
+    const volumeMuteIcon = document.getElementById('volumeMuteIcon');
+
+    audio.volume = 0.7;
 
     function formatTime(seconds) {
-        if (isNaN(seconds)) return '0:00';
+        if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function setPlayingState(playing) {
+        playIcon.classList.toggle('hidden', playing);
+        pauseIcon.classList.toggle('hidden', !playing);
     }
 
     function loadSong(index, autoPlay = true) {
@@ -207,30 +218,29 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!song) return;
 
         fetch(`/play/${song.id}`)
-            .then(res => {
-                if (!res.ok) throw new Error("Error en servidor");
-                return res.json();
-            })
+            .then(res => res.json())
             .then(data => {
-
                 const fileUrl = `${window.location.origin}/storage/${data.file_path}`;
-
+                
                 audio.src = fileUrl;
                 nowPlayingTitle.innerText = data.title;
                 nowPlayingArtist.innerText = data.artist;
-
                 nowPlayingImage.src = data.image.startsWith('http')
                     ? data.image
                     : `${window.location.origin}/storage/${data.image}`;
 
+                progressBar.value = 0;
+                progressBar.max = 0;
+                currentTimeSpan.innerText = '0:00';
+                durationSpan.innerText = '0:00';
+
                 audio.load();
 
                 if (autoPlay) {
-                    audio.play();
+                    audio.play().then(() => setPlayingState(true)).catch(console.error);
                 }
-
             })
-            .catch(err => console.error(err));
+            .catch(console.error);
     }
 
     function nextSong() {
@@ -243,32 +253,74 @@ document.addEventListener('DOMContentLoaded', function() {
         loadSong(currentIndex, true);
     }
 
-    playPauseBtn.addEventListener('click', () => {
-        if (audio.paused) {
-            audio.play();
-        } else {
-            audio.pause();
+    // ✅ Solución robusta: usar 'change' en lugar de mouseup/touchend
+    progressBar.addEventListener('mousedown', () => {
+        isSeeking = true;
+    });
+
+    progressBar.addEventListener('change', function() {
+        // 'change' se dispara al SOLTAR el mouse/dedo
+        const seekTo = parseFloat(this.value);
+        console.log('Seeking to:', seekTo, '| Duration:', audio.duration);
+        audio.currentTime = seekTo;
+        isSeeking = false;
+    });
+
+    progressBar.addEventListener('input', function() {
+        // Solo actualiza el texto mientras arrastra
+        if (isSeeking) {
+            currentTimeSpan.innerText = formatTime(parseFloat(this.value));
         }
     });
 
-    nextBtn.addEventListener('click', nextSong);
-    prevBtn.addEventListener('click', prevSong);
-
     audio.addEventListener('timeupdate', () => {
-        progressBar.value = audio.currentTime;
-        currentTimeSpan.innerText = formatTime(audio.currentTime);
+        if (!isSeeking && audio.duration) {
+            progressBar.value = audio.currentTime;
+            currentTimeSpan.innerText = formatTime(audio.currentTime);
+        }
     });
 
     audio.addEventListener('loadedmetadata', () => {
+        console.log('Metadata loaded. Duration:', audio.duration);
         progressBar.max = audio.duration;
         durationSpan.innerText = formatTime(audio.duration);
     });
 
-    progressBar.addEventListener('input', function() {
-        audio.currentTime = this.value;
+    // Por si loadedmetadata ya pasó antes de asignar el evento
+    audio.addEventListener('durationchange', () => {
+        if (audio.duration && isFinite(audio.duration)) {
+            progressBar.max = audio.duration;
+            durationSpan.innerText = formatTime(audio.duration);
+        }
     });
 
+    playPauseBtn.addEventListener('click', () => {
+        if (audio.paused) {
+            audio.play().then(() => setPlayingState(true));
+        } else {
+            audio.pause();
+            setPlayingState(false);
+        }
+    });
+
+    audio.addEventListener('play', () => setPlayingState(true));
+    audio.addEventListener('pause', () => setPlayingState(false));
     audio.addEventListener('ended', nextSong);
+
+    nextBtn.addEventListener('click', nextSong);
+    prevBtn.addEventListener('click', prevSong);
+
+    volumeControl.addEventListener('input', function() {
+        audio.volume = this.value;
+        volumeHighIcon.classList.toggle('hidden', this.value == 0);
+        volumeMuteIcon.classList.toggle('hidden', this.value > 0);
+    });
+
+    muteBtn.addEventListener('click', () => {
+        audio.muted = !audio.muted;
+        volumeHighIcon.classList.toggle('hidden', audio.muted);
+        volumeMuteIcon.classList.toggle('hidden', !audio.muted);
+    });
 
     document.querySelectorAll('.song-card').forEach((card, idx) => {
         card.addEventListener('click', () => {
@@ -276,7 +328,6 @@ document.addEventListener('DOMContentLoaded', function() {
             loadSong(currentIndex, true);
         });
     });
-
 });
 </script>
 </x-app-layout>

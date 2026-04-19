@@ -1,57 +1,82 @@
 <x-guest-layout>
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+    <style>
+        /* Fondo premium forzado */
+        body, .min-h-screen {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%) !important;
+        }
 
-    <form method="POST" action="{{ route('login') }}">
-        @csrf
+        .apple-card {
+            background: rgba(20, 20, 30, 0.8) !important;
+            backdrop-filter: blur(20px);
+            border-radius: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.4);
+        }
 
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
+        .apple-input {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border-radius: 0.75rem !important;
+            color: white !important;
+            padding: 0.85rem 1rem !important;
+        }
 
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+        .apple-button {
+            background: linear-gradient(90deg, #a855f7, #ec4899) !important;
+            border-radius: 2rem !important;
+            transition: all 0.3s ease;
+        }
+    </style>
 
-            <x-text-input id="password" class="block mt-1 w-full"
-                type="password"
-                name="password"
-                required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-            </label>
-        </div>
-
-        <div class="flex items-center justify-between mt-4">
-
-            <div>
-                @if (Route::has('register'))
-                    <a href="{{ route('register') }}" 
-                       class="text-sm text-indigo-600 hover:text-indigo-900 underline">
-                        {{ __('¿No tienes cuenta? Regístrate') }}
-                    </a>
-                @endif
+    <div class="min-h-screen flex items-center justify-center py-12 px-4">
+        <div class="max-w-md w-full space-y-8 apple-card p-8 md:p-10">
+            
+            <div class="text-center">
+                <div class="mx-auto w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg mb-5">
+                    <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-bold text-white tracking-tight">Bienvenido de nuevo</h2>
+                <p class="mt-2 text-gray-400 text-sm">Inicia sesión para disfrutar de la mejor música</p>
             </div>
 
-            <div class="flex items-center">
-                @if (Route::has('password.request'))
-                    <a class="text-sm text-gray-600 hover:text-gray-900 mr-4"
-                       href="{{ route('password.request') }}">
-                        {{ __('Forgot your password?') }}
+            <form method="POST" action="{{ route('login') }}" class="mt-6 space-y-5">
+                @csrf
+
+                <div>
+                    <label class="block text-gray-400 text-xs mb-1 ml-1">Correo electrónico</label>
+                    <input type="email" name="email" value="{{ old('email') }}" required autofocus
+                           class="apple-input w-full" placeholder="gaelceron45@gmail.com">
+                </div>
+
+                <div>
+                    <label class="block text-gray-400 text-xs mb-1 ml-1">Contraseña</label>
+                    <input type="password" name="password" required
+                           class="apple-input w-full" placeholder="••••••••••••">
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <label class="inline-flex items-center text-gray-400 text-sm">
+                        <input type="checkbox" name="remember" class="rounded bg-gray-800 border-gray-700 text-purple-500 focus:ring-purple-500">
+                        <span class="ml-2">Recordarme</span>
+                    </label>
+                    <a href="{{ route('password.request') }}" class="text-purple-400 text-sm hover:underline">
+                        ¿Olvidaste tu contraseña?
                     </a>
-                @endif
+                </div>
 
-                <x-primary-button>
-                    {{ __('Log in') }}
-                </x-primary-button>
-            </div>
+                <button type="submit" class="apple-button w-full py-3 text-white font-bold uppercase tracking-widest text-sm">
+                    INICIAR SESIÓN
+                </button>
 
+                <div class="text-center pt-2">
+                    <p class="text-gray-400 text-sm">
+                        ¿No tienes cuenta? 
+                        <a href="{{ route('register') }}" class="text-purple-400 font-bold hover:underline">Regístrate</a>
+                    </p>
+                </div>
+            </form>
         </div>
-    </form>
+    </div>
 </x-guest-layout>
