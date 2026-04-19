@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PlaylistController; // 🔥 FALTABA ESTO
 
 Route::get('/', [DashboardController::class, 'index'])
     ->middleware(['auth']);
@@ -10,6 +11,19 @@ Route::get('/', [DashboardController::class, 'index'])
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth'])
     ->name('dashboard');
+
+Route::get('/play/{id}', [DashboardController::class, 'play'])
+    ->middleware('auth');
+
+Route::get('/dj', function () {
+    return view('dj');
+});
+
+Route::get('/playlist', [PlaylistController::class, 'index'])
+    ->middleware('auth');
+
+Route::post('/playlist', [PlaylistController::class, 'store'])
+    ->middleware('auth');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

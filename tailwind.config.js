@@ -8,6 +8,11 @@ export default {
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
     ],
+    extend: {
+    animation: {
+        pulseSlow: 'pulse 2s infinite',
+    }
+},
 
     theme: {
         extend: {
@@ -18,4 +23,5 @@ export default {
     },
 
     plugins: [forms],
+
 };

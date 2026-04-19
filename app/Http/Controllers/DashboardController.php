@@ -13,20 +13,17 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
 
-        // 🔹 Si no tiene historial → usuario nuevo
         $hasHistory = History::where('user_id', $user->id)->exists();
 
         if (!$hasHistory) {
-            // Mostrar canciones generales
             $songs = Song::inRandomOrder()->limit(10)->get();
         } else {
-            // Obtener géneros favoritos
-            $favoriteGenres = History::where('user_id', $user->id)
+            $favoriteGenres = History::where('histories.user_id', $user->id)
                 ->join('songs', 'histories.song_id', '=', 'songs.id')
                 ->select('songs.genre_id', DB::raw('count(*) as total'))
                 ->groupBy('songs.genre_id')
                 ->orderByDesc('total')
-                ->pluck('genre_id');
+                ->pluck('songs.genre_id');
 
             $songs = Song::whereIn('genre_id', $favoriteGenres)
                 ->inRandomOrder()
@@ -34,6 +31,62 @@ class DashboardController extends Controller
                 ->get();
         }
 
-        return view('dashboard', compact('songs', 'user'));
+        $songsData = $songs->map(function ($song) {
+            return [
+                'id' => $song->id,
+                'title' => $song->title,
+                'artist' => $song->artist,
+                'file_path' => $song->file_path,
+                'image' => $song->image
+            ];
+        });
+
+        return view('dashboard', compact('songs', 'songsData'));
     }
+
+    public function play($id)
+    {
+        $song = Song::find($id);
+
+        if (!$song) {
+            return response()->json(['error' => 'Canción no encontrada'], 404);
+        }
+
+        History::create([
+            'user_id' => auth()->id(),
+            'song_id' => $song->id
+        ]);
+
+        return response()->json([
+            'id' => $song->id,
+            'title' => $song->title,
+            'artist' => $song->artist,
+            'file_path' => $song->file_path,
+            'image' => $song->image
+        ]);
+    }
+    public function dj()
+{
+    $user = auth()->user();
+
+    $hasHistory = \App\Models\History::where('user_id', $user->id)->exists();
+
+    if (!$hasHistory) {
+        $songs = \App\Models\Song::inRandomOrder()->limit(15)->get();
+    } else {
+        $genres = \App\Models\History::where('user_id', $user->id)
+            ->join('songs', 'histories.song_id', '=', 'songs.id')
+            ->select('songs.genre_id', \DB::raw('count(*) as total'))
+            ->groupBy('songs.genre_id')
+            ->orderByDesc('total')
+            ->pluck('genre_id');
+
+        $songs = \App\Models\Song::whereIn('genre_id', $genres)
+            ->inRandomOrder()
+            ->limit(15)
+            ->get();
+    }
+
+    return view('dj', compact('songs'));
+}
 }
