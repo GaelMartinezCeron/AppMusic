@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(`/play/${song.id}`)
             .then(res => res.json())
             .then(data => {
-                const fileUrl = `${window.location.origin}/storage/${data.file_path}`;
+const fileUrl = `${window.location.origin}/audio/${data.file_path}`;
                 
                 audio.src = fileUrl;
                 nowPlayingTitle.innerText = data.title;
@@ -253,7 +253,6 @@ document.addEventListener('DOMContentLoaded', function() {
         loadSong(currentIndex, true);
     }
 
-    // ✅ Solución robusta: usar 'change' en lugar de mouseup/touchend
     progressBar.addEventListener('mousedown', () => {
         isSeeking = true;
     });

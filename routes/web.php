@@ -26,7 +26,9 @@ Route::get('/playlist/{id}', [\App\Http\Controllers\PlaylistController::class, '
 
 Route::post('/playlist/add-song', [\App\Http\Controllers\PlaylistController::class, 'addSong'])
     ->middleware('auth');
-
+Route::get('/audio/{path}', [App\Http\Controllers\AudioController::class, 'stream'])
+    ->where('path', '.*')
+    ->middleware('auth');
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
